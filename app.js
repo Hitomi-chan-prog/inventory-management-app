@@ -48,6 +48,7 @@ function productForm(product) {
   const back = editing ? `#product/${product.id}` : '#inventory';
   screen.innerHTML = `<a class="back" href="${back}">← 戻る</a>` + heading(editing ? '商品編集' : '商品登録', '商品の基本情報を入力してください。') + `
     <form id="product-form" class="card form-card"><label class="field">商品コード<span class="required">必須</span><input name="code" required maxlength="40" value="${product?.code || ''}" ${editing ? 'readonly' : ''}><span class="hint">登録後は変更できません。削除済みのコードも再利用できません。</span></label><label class="field">商品名<span class="required">必須</span><input name="name" required maxlength="100" value="${product?.name || ''}"></label><label class="field">単位<span class="required">必須</span><input name="unit" required maxlength="10" placeholder="例：個、冊、本" value="${product?.unit || ''}" ${editing ? 'readonly' : ''}><span class="hint">履歴がある商品の単位は変更できません。</span></label><label class="field">発注点<span class="required">必須</span><input name="point" type="number" required min="0" step="1" value="${product?.point ?? 0}"><span class="hint">在庫数がこの値以下になるとアラートを表示します。</span></label><p class="hint">${editing ? '在庫数は入庫・出庫で変更します。' : '初期在庫は0です。登録後、入庫から追加します。'}</p><div class="actions"><a class="button" href="${back}">キャンセル</a><button class="primary" type="submit">${editing ? '編集' : '登録'}内容を確認（デモ）</button></div></form>`;
+  document.querySelector('#product-form').addEventListener('input', () => announce(''));
   document.querySelector('#product-form').addEventListener('submit', event => {
     event.preventDefault();
     announce('入力内容を確認しました。画面デモのため保存していません。');
