@@ -372,7 +372,11 @@ h1 {
   display:block;
   text-align:left}
 #inventory-table thead {
-  display:none}
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip-path:inset(50%)}
 #inventory-table tr {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -398,3 +402,15 @@ h1 {
   justify-self:end}
 }
 
+/* 入力エラーとモード表示 */
+.field-error { display:block; color:#a52d26; font-size:13px; }
+[aria-invalid="true"] { border-color:#a52d26; }
+.mode-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+@media(max-width:600px) {
+  .site-header { height:auto; min-height:90px; gap:10px; padding:12px 16px; flex-wrap:wrap; }
+  .mode-controls button { font-size:12px; padding:5px 8px; }
+}
+
+#db-notice { color:#8a251f; background:#fff1ef; border:1px solid #dca69f; border-radius:7px; padding:12px 16px; }
+
+#save-notice { color:#175a42; background:#edf7f1; border:1px solid #adcdbb; border-radius:7px; padding:12px 16px; }
