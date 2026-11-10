@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ストックノート | 在庫管理</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="#inventory">▦ ストックノート<span>在庫管理・発注アラート</span></a><span class="demo-tag">画面デモ</span></header>
+  <div class="layout">
+    <nav aria-label="メインナビゲーション"><p class="nav-label">ワークスペース</p><a href="#inventory" data-nav="inventory">在庫一覧</a><a href="#product/new" data-nav="product">商品登録</a><a href="#history" data-nav="history">入出庫・取消履歴</a><p class="nav-help">毎日の在庫を、<br>見やすく、確実に。</p></nav>
+    <main id="main"><p class="demo-notice">仮データの画面デモです。保存・在庫更新・取消・CSV出力は実行しません。</p><div id="screen"></div></main>
+  </div>
+  <p id="status" role="status" class="status"></p>
+  <dialog id="operation-dialog" aria-labelledby="dialog-title"><form id="operation-form"><div class="dialog-heading"><h2 id="dialog-title"></h2><button type="button" class="icon-button" data-close aria-label="閉じる">×</button></div><div id="dialog-content"></div><div class="actions"><button type="button" data-close>戻る</button><button class="primary" type="submit">デモ内容を確認</button></div></form></dialog>
+</body>
+</html>
