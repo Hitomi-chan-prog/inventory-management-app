@@ -353,7 +353,11 @@ InventoryDB.subscribe(message => {
 });
 window.addEventListener('pagehide', () => InventoryDB.close());
 window.addEventListener('pageshow', event => {
-  if (event.persisted && !demoMode) { dbState = 'idle'; renderRoute(); }
+  if (!event.persisted || demoMode) return;
+  // bfcacheはDOMと編集開始時のversionを保持しています。再作成せずDBだけを更新。
+  dbState = 'idle';
+  if (document.querySelector('#product-form')) loadNormalProducts();
+  else renderRoute();
 });
 document.addEventListener('click', event => {
   if (savingProduct && event.target.closest('a')) { event.preventDefault(); announce('保存中です。完了までお待ちください。'); }
