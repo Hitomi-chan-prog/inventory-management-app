@@ -1,0 +1,12 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),q=require('../js/history-query.js');
+const movement=(id,time,patch={})=>({id,productId:'p',type:'IN',productCodeSnapshot:'A-1',productNameSnapshot:'旧商品<&',occurredAt:time,stockVersionAfter:2,...patch});
+const rows=[movement('before','2026-11-09T14:59:59.999Z'),movement('start','2026-11-09T15:00:00.000Z'),movement('end','2026-11-10T14:59:59.999Z'),movement('after','2026-11-10T15:00:00.000Z')];
+test('日本時間の開始日・終了日を両端含む',()=>assert.deepEqual(q.search(rows,[],{start:'2026-11-10',end:'2026-11-10'}).items.map(m=>m.id),['end','start']));
+for(const value of ['2026-02-30','2026-13-01','2026-1-1','bad','2025-02-29'])test('不正日付 '+value,()=>assert.ok(q.search(rows,[],{start:value}).error));
+test('逆転期間を拒否、うるう日を許可',()=>{assert.ok(q.search(rows,[],{start:'2026-11-11',end:'2026-11-10'}).error);assert.equal(q.search([],[],{start:'2024-02-29'}).error,'')});
+test('商品コードと取引時商品名を元文字列で検索',()=>{assert.equal(q.search(rows,[],{keyword:' a-1 '}).total,4);assert.equal(q.search(rows,[],{keyword:'旧商品<&'}).total,4);assert.equal(q.search(rows,[],{keyword:'なし'}).total,0)});
+test('商品・種別・取消状態を複合検索',()=>{const data=[...rows,movement('out',rows[0].occurredAt,{type:'OUT',productId:'other'})],c=[{movementId:'start'}];assert.equal(q.search(data,c,{status:'cancelled'}).total,1);assert.equal(q.search(data,c,{status:'active',type:'IN',productId:'p'}).total,3);assert.equal(q.search(data,c,{type:'OUT'}).total,1)});
+test('同時刻の順序が入力順に依存しない',()=>{const a=[movement('a',rows[0].occurredAt),movement('b',rows[0].occurredAt,{stockVersionAfter:3}),movement('c',rows[0].occurredAt,{productId:'other'})];assert.deepEqual(q.search(a,[],{}).items,q.search([...a].reverse(),[],{}).items)});
+test('50件ページ分割・最終ページ補正・入力不変',()=>{const data=Array.from({length:101},(_,i)=>movement(String(i).padStart(3,'0'),rows[0].occurredAt));const copy=structuredClone(data);assert.equal(q.search(data,[],{}).items.length,50);assert.equal(q.search(data,[],{page:3}).items.length,1);assert.equal(q.search(data,[],{page:99}).page,3);assert.deepEqual(data,copy)});
+test('0件は正常、ページは1',()=>assert.deepEqual(q.search([],[],{}),{items:[],total:0,page:1,pages:1,error:''}));
+test('UTC値を変えず日本時間表示',()=>{const time='2026-11-09T15:00:00.000Z';assert.match(q.formatTime(time),/2026\/11\/10 00:00:00.*日本時間/);assert.equal(time,'2026-11-09T15:00:00.000Z')});

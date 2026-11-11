@@ -414,3 +414,7 @@ h1 {
 #db-notice { color:#8a251f; background:#fff1ef; border:1px solid #dca69f; border-radius:7px; padding:12px 16px; }
 
 #save-notice { color:#175a42; background:#edf7f1; border:1px solid #adcdbb; border-radius:7px; padding:12px 16px; }
+
+.history-filters { flex-wrap:wrap; align-items:end; }
+.history-filters label { min-width:160px; flex:1; }
+.history-value { overflow-wrap:anywhere; white-space:pre-wrap; }
