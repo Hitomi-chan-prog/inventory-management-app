@@ -7,7 +7,7 @@ const http = require('node:http');
 
 test('bfcache復帰時の入力保持', async t => {
   const root = path.resolve(__dirname,'..');
-  const files = ['index.html','styles.css','app.js','js/inventory-db.js','js/product-validation.js'];
+  const files = ['index.html','styles.css','app.js','js/inventory-db.js','js/history-validation.js','js/history-query.js','js/product-validation.js','js/movement-validation.js'];
   const server = http.createServer((req,res) => {
     if (req.url === '/away') { res.setHeader('Content-Type','text/html'); res.end('<!doctype html><title>移動先</title><p>テスト用の別ページ</p>'); return; }
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);

@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 test('モード分離・入力・安全表示・レスポンシブ表示', async () => {
   const root = path.resolve(__dirname, '..');
-  const allowed = ['index.html', 'app.js', 'styles.css', 'js/product-validation.js', 'js/inventory-db.js'];
+  const allowed = ['index.html', 'app.js', 'styles.css', 'js/product-validation.js', 'js/inventory-db.js','js/history-validation.js','js/history-query.js','js/movement-validation.js'];
   const server = http.createServer((req, res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
     if (!allowed.includes(file)) { res.writeHead(404).end(); return; }
@@ -94,7 +94,7 @@ test('モード分離・入力・安全表示・レスポンシブ表示', async
 
 test('レビュー指摘のブラウザ再発防止', async t => {
   const root = path.resolve(__dirname, '..');
-  const allowed = ['index.html', 'app.js', 'styles.css', 'js/product-validation.js', 'js/inventory-db.js'];
+  const allowed = ['index.html', 'app.js', 'styles.css', 'js/product-validation.js', 'js/inventory-db.js','js/history-validation.js','js/history-query.js','js/movement-validation.js'];
   const server = http.createServer((req, res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
     if (!allowed.includes(file)) { res.writeHead(404).end(); return; }
@@ -153,12 +153,12 @@ test('レビュー指摘のブラウザ再発防止', async t => {
         await page.keyboard.press('Escape');
       }
     });
-    await t.test('通常モードのIN・OUT・CANCEL直接呼び出しを拒否', async () => {
+    await t.test('通常モードの未知商品IN・OUTと未知履歴CANCELの直接呼び出しを拒否', async () => {
       await reset();
       for (const operation of ['IN', 'OUT', 'CANCEL']) {
         await page.evaluate(operation => openOperation({ dataset:{ operation, product:'p1', movement:'m1' } }), operation);
         assert.equal(await page.locator('dialog').isVisible(), false);
-        assert.match(await page.locator('#status').textContent(), /準備中/);
+        assert.match(await page.locator('#status').textContent(), /見つかりません/);
       }
     });
     await t.test('通常モードからデモ商品の詳細・編集URLへアクセスできない', async () => {

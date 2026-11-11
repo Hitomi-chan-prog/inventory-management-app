@@ -5,7 +5,7 @@
   "description": "HTML・CSS・JavaScriptの在庫管理アプリ。Node.jsはテスト専用。",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "test:unit": "node --test tests/product-validation.test.cjs"
+    "test:unit": "node --test tests/product-validation.test.cjs tests/history-validation.test.cjs tests/movement-validation.test.cjs tests/history-query.test.cjs"
   },
   "engines": { "node": ">=22" },
   "devDependencies": { "playwright": "1.62.1" }

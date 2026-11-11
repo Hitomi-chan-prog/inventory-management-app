@@ -7,7 +7,7 @@ const path = require('node:path');
 
 test('IndexedDB保存基盤', async t => {
   const root = path.resolve(__dirname, '..');
-  const allowed = ['index.html','app.js','styles.css','js/inventory-db.js','js/product-validation.js'];
+  const allowed = ['index.html','app.js','styles.css','js/inventory-db.js','js/history-validation.js','js/history-query.js','js/product-validation.js','js/movement-validation.js'];
   const server = http.createServer((req,res) => {
     const file = req.url === '/' ? 'index.html' : req.url.slice(1);
     if (!allowed.includes(file)) { res.writeHead(404).end(); return; }
@@ -48,7 +48,7 @@ test('IndexedDB保存基盤', async t => {
     await t.test('初期作成・スキーマ・0件・切断後の再接続',()=>fixture(async page=>{
       await ready(page);
       assert.deepEqual(await page.evaluate(()=>InventoryDB.readProducts()),[]);
-      assert.deepEqual(await page.evaluate(async()=>{const db=await InventoryDB.open();const tx=db.transaction(['products','stocks']);const p=tx.objectStore('products');return {version:db.version,key:p.keyPath,stockKey:tx.objectStore('stocks').keyPath,index:p.index('productCode').keyPath,unique:p.index('productCode').unique};}),{version:1,key:'id',stockKey:'productId',index:'productCode',unique:true});
+      assert.deepEqual(await page.evaluate(async()=>{const db=await InventoryDB.open();const tx=db.transaction(['products','stocks']);const p=tx.objectStore('products');return {version:db.version,key:p.keyPath,stockKey:tx.objectStore('stocks').keyPath,index:p.index('productCode').keyPath,unique:p.index('productCode').unique};}),{version:2,key:'id',stockKey:'productId',index:'productCode',unique:true});
       await page.evaluate(()=>InventoryDB.close());
       assert.deepEqual(await page.evaluate(()=>InventoryDB.readProducts()),[]);
     }));
@@ -57,12 +57,12 @@ test('IndexedDB保存基盤', async t => {
       assert.equal(await page.locator('tbody tr').count(),1);
       assert.equal(await page.locator('tbody strong').textContent(),'商品<&');
       assert.equal(await page.locator('img').count(),0);
-      assert.equal(await page.locator('[data-operation=IN]').isDisabled(),true);
-      assert.equal(await page.locator('[data-operation=OUT]').isDisabled(),true);
+      assert.equal(await page.locator('[data-operation=IN]').isDisabled(),false);
+      assert.equal(await page.locator('[data-operation=OUT]').isDisabled(),false);
       await page.locator('#search').fill('商品');
-      assert.equal(await page.locator('[data-operation=IN]').isDisabled(),true);
+      assert.equal(await page.locator('[data-operation=IN]').isDisabled(),false);
       await page.locator('#alert-only').check();
-      assert.equal(await page.locator('[data-operation=OUT]').isDisabled(),true);
+      assert.equal(await page.locator('[data-operation=OUT]').isDisabled(),false);
       await page.locator('#mode-toggle').click();await waitMode(page,'デモモード',5);assert.equal(await page.locator('tbody tr').count(),5);
       await page.locator('#mode-toggle').click();await waitMode(page,'通常モード',1);assert.equal(await page.locator('tbody tr').count(),1);
     }));
@@ -118,13 +118,13 @@ test('IndexedDB保存基盤', async t => {
       assert.equal(await page.evaluate(async()=> (await indexedDB.databases()).some(db=>db.name===InventoryDB.NAME)),true);
     }));
     await t.test('新しいDBバージョンを旧アプリが開くとエラー',()=>fixture(async page=>{
-      await ready(page);await page.evaluate(async()=>{InventoryDB.close();await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,2);req.onsuccess=()=>{req.result.close();resolve()};req.onerror=()=>reject(req.error)})});
+      await ready(page);await page.evaluate(async()=>{InventoryDB.close();await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,3);req.onsuccess=()=>{req.result.close();resolve()};req.onerror=()=>reject(req.error)})});
       await page.reload();await page.waitForFunction(()=>dbState==='error');
       assert.match(await page.locator('#db-message').textContent(),/バージョン/);
     }));
     await t.test('versionchangeで接続を閉じ他タブの更新を妨げない',()=>fixture(async(page,context)=>{
       await ready(page);const other=await context.newPage();await other.goto(base);await ready(other);
-      await other.evaluate(async()=>{InventoryDB.close();await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,2);req.onsuccess=()=>{req.result.close();resolve()};req.onerror=()=>reject(req.error)})});
+      await other.evaluate(async()=>{InventoryDB.close();await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,3);req.onsuccess=()=>{req.result.close();resolve()};req.onerror=()=>reject(req.error)})});
       await page.waitForFunction(()=>dbState==='error');
       assert.match(await page.locator('#db-message').textContent(),/別のタブ/);
     }));
@@ -132,10 +132,10 @@ test('IndexedDB保存基盤', async t => {
       await ready(page);
       await page.evaluate(async()=>{
         InventoryDB.close();
-        await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,1);req.onsuccess=()=>{window.blocker=req.result;resolve()};req.onerror=()=>reject(req.error)});
+        await new Promise((resolve,reject)=>{const req=indexedDB.open(InventoryDB.NAME,2);req.onsuccess=()=>{window.blocker=req.result;resolve()};req.onerror=()=>reject(req.error)});
       });
       const upgraded=await context.newPage();
-      await upgraded.route('**/js/inventory-db.js',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js/inventory-db.js'),'utf8').replace('const VERSION = 1;', 'const VERSION = 2;')}));
+      await upgraded.route('**/js/inventory-db.js',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js/inventory-db.js'),'utf8').replace('const VERSION = 2;', 'const VERSION = 3;')}));
       await upgraded.goto(base);
       await upgraded.waitForFunction(()=>document.querySelector('#db-message')?.textContent.includes('更新待ち'));
       await page.evaluate(()=>window.blocker.close());
@@ -220,7 +220,8 @@ test('IndexedDB保存基盤', async t => {
     },()=>{
       const original=IDBFactory.prototype.open;
       const set=window.setTimeout.bind(window);
-      window.setTimeout=(fn,ms,...args)=>set(fn,ms===8000?100:ms,...args);
+      // 実DBの準備完了後にタイムアウトを先に発火し、CPU負荷に依存させません。
+      window.setTimeout=(fn,ms,...args)=>{if(ms===8000){window.triggerDbTimeout=fn;return set(fn,10000,...args)}return set(fn,ms,...args)};
       IDBFactory.prototype.open=function(...args){
         const req=original.apply(this,args);
         return new Proxy(req,{
@@ -230,7 +231,8 @@ test('IndexedDB保存基盤', async t => {
               const db=target.result;
               const close=db.close.bind(db);
               db.close=()=>{window.lateConnectionClosed=true;close()};
-              set(()=>value(event),300);
+              window.triggerDbTimeout();
+              set(()=>value(event),0);
             };
             else Reflect.set(target,key,value,target);
             return true;
@@ -507,7 +509,7 @@ test('IndexedDB保存基盤', async t => {
     }));
     await t.test('発注点の編集でアラートと要発注集計を両方向に更新',()=>fixture(async page=>{
       await ready(page);const {p}=await seed(page);
-      await page.evaluate(async id=>{const db=await InventoryDB.open();await new Promise(resolve=>{const tx=db.transaction('stocks','readwrite');const req=tx.objectStore('stocks').get(id);req.onsuccess=()=>tx.objectStore('stocks').put({...req.result,quantity:5});tx.oncomplete=resolve})},p.id);
+      await page.evaluate(async id=>{const db=await InventoryDB.open();await new Promise(resolve=>{const tx=db.transaction(['stocks','movements'],'readwrite');const req=tx.objectStore('stocks').get(id);req.onsuccess=()=>{const stock=req.result;tx.objectStore('stocks').put({...stock,quantity:5,version:2});tx.objectStore('movements').add({id:crypto.randomUUID(),productId:id,type:'IN',quantity:5,stockBefore:0,stockAfter:5,stockVersionBefore:1,stockVersionAfter:2,productCodeSnapshot:'A-1',productNameSnapshot:'商品<&',unitSnapshot:'個',occurredAt:stock.updatedAt,note:'',actorId:null})};tx.oncomplete=resolve})},p.id);
       await page.reload();await ready(page);assert.deepEqual(await page.locator('.stat-value').allTextContents(),['1件','0件','0件']);
       for(const [point,label,count]of [['5','要発注','1件'],['4','適正在庫','0件']]){
         await openEdit(page,p.id);await page.locator('[name=point]').fill(point);await page.getByRole('button',{name:'変更を保存',exact:true}).click();await page.waitForFunction(()=>!savingProduct&&location.hash==='#inventory');
